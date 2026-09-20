@@ -13,8 +13,8 @@
     --ink:#edf3ff; --muted:#8995aa; --line:#202b3c; --line2:#2b394e;
     --red:#ff3b4f; --blue:#38a9ff; --cyan:#53d5ff; --green:#52d58b;
     --yellow:#f6c85f; --purple:#a779ff; --shadow:0 12px 32px rgba(0,0,0,.28);
-    --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-    --cond:"Arial Narrow",Impact,Haettenschweiler,"Segoe UI",sans-serif;
+    --sans:"Segoe UI",Arial,Helvetica,sans-serif;
+    --cond:"Segoe UI",Arial,Helvetica,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}
@@ -99,6 +99,29 @@
   details summary{cursor:pointer;font-weight:700;color:#b9c7da;font-size:11px}
   details p,details li{color:var(--muted);font-size:11px}
   details ul{margin:6px 0;padding-left:18px}
+  /* Synergy calculator: readable, side-by-side, keyboard-first layout */
+  .synergy-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(310px,.9fr);gap:10px;align-items:stretch}
+  .synergy-input-panel,.synergy-results-panel{background:linear-gradient(180deg,var(--surface),#0b1017);border:1px solid var(--line);border-radius:13px;padding:11px}
+  .synergy-input-panel .grid{grid-template-columns:minmax(92px,1fr) minmax(88px,100px) minmax(88px,100px);gap:5px 8px}
+  .synergy-input-panel .grid input{height:34px;font-size:15px}
+  .synergy-input-panel .grid label{font-size:12px}
+  .input-help{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:0 0 7px;color:var(--muted);font-size:10px}
+  .input-help kbd{font-family:var(--sans);font-weight:800;color:var(--ink);background:var(--field);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:2px 5px}
+  .synergy-results-panel{display:flex;flex-direction:column;min-width:0}
+  .claude-blocks{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .claude-block{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px;min-height:92px}
+  .claude-block .block-title{font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .claude-block .block-value{font-size:28px;font-weight:850;line-height:1.05;margin-top:4px}
+  .claude-block .block-desc{font-size:10px;color:var(--muted);line-height:1.3;margin-top:5px}
+  .claude-block.main{grid-column:1/-1;border-color:#63303a;background:linear-gradient(180deg,#1b1015,var(--field))}
+  .claude-block.main .block-title{color:#ff9aa4}
+  .claude-block.main .block-value{font-size:42px;color:#ff6a78}
+  .synergy-results-panel .chart-wrap{margin-top:8px}
+  .synergy-results-panel .insight,.synergy-results-panel .caution{margin-top:7px}
+  .synergy-results-panel details{margin-top:auto;padding-top:7px}
+  .synergy-results-panel summary{cursor:pointer;color:var(--muted);font-size:10px}
+  @media(max-width:800px){.synergy-layout{grid-template-columns:1fr}.synergy-results-panel{min-height:0}}
+
   @media(max-width:800px){
     .dashboard{grid-template-columns:1fr 1fr}
     .dashboard .card:last-child{grid-column:1/-1}
@@ -110,7 +133,7 @@
     .dashboard .card:last-child{grid-column:auto}
     .tabs{grid-template-columns:repeat(2,1fr)}
     .results{grid-template-columns:repeat(2,1fr)}
-    .grid{grid-template-columns:1fr 66px 66px}
+    .synergy-input-panel .grid{grid-template-columns:1fr 70px 70px}
     .fact{grid-template-columns:1fr}
     .fact-side{display:none}
     .race{grid-template-columns:32px 1fr}
@@ -156,22 +179,31 @@
     </div>
 
     <section class="panel">
-      <div class="panel-head"><div><h2>Pair Synergy Calculator</h2><div class="hint">Enter both drivers' six stats (0–10).</div></div><div class="hint">Compact mode</div></div>
-      <div class="presets"><button class="pill" data-preset="pair2">Try pair 2</button><button class="pill" data-preset="pair3">Try pair 3</button><button class="pill" data-preset="clear">Clear</button></div>
-      <div class="grid" id="grid"><span></span><span class="head a">Driver A</span><span class="head b">Driver B</span></div>
-      <div class="msg" id="msg" role="status"></div>
-      <div class="chart-wrap"><svg id="chart" viewBox="0 0 600 215" role="img" aria-label="Mirrored bar chart of both drivers' stats"></svg></div>
-      <div class="results">
-        <div class="metric main"><div class="label">Synergy</div><div class="num" id="r-syn">–</div></div>
-        <div class="metric"><div class="label">Coverage</div><div class="num" id="r-cov">–</div></div>
-        <div class="metric"><div class="label">Balance</div><div class="num" id="r-bal">–</div></div>
-        <div class="metric"><div class="label">Overlap</div><div class="num" id="r-ovl">–</div></div>
+      <div class="panel-head"><div><h2>Pair Synergy Calculator</h2><div class="hint">Enter the six stats for each driver. Values are 1–10. 1 is the game minimum and every field starts at 1.</div></div><div class="hint">Keyboard-first</div></div>
+      <div class="synergy-layout">
+        <div class="synergy-input-panel">
+          <div class="input-help"><span><kbd>Enter</kbd> jumps to the next stat automatically</span><span>1–10 • starts at 1</span></div>
+          <div class="presets"><button class="pill" data-preset="pair2">Try pair 2</button><button class="pill" data-preset="pair3">Try pair 3</button><button class="pill" data-preset="clear">Clear</button></div>
+          <div class="grid" id="grid"><span></span><span class="head a">Driver A</span><span class="head b">Driver B</span></div>
+          <div class="msg" id="msg" role="status"></div>
+        </div>
+
+        <div class="synergy-results-panel">
+          <div class="claude-blocks">
+            <div class="claude-block main"><div class="block-title">Synergy</div><div class="block-value" id="r-syn">–</div><div class="block-desc">Overall pair score from the current experimental calculation.</div></div>
+            <div class="claude-block"><div class="block-title">Coverage</div><div class="block-value" id="r-cov">–</div><div class="block-desc">Average strength of the better driver in each stat.</div></div>
+            <div class="claude-block"><div class="block-title">Balance</div><div class="block-value" id="r-bal">–</div><div class="block-desc">How even the six best-of-two stats are.</div></div>
+            <div class="claude-block"><div class="block-title">Overlap</div><div class="block-value" id="r-ovl">–</div><div class="block-desc">Total absolute difference between the two drivers.</div></div>
+          </div>
+          <div class="chart-wrap"><svg id="chart" viewBox="0 0 600 215" role="img" aria-label="Mirrored bar chart of both drivers' stats"></svg></div>
+          <div class="insight" id="insight"></div>
+          <div class="caution" id="caution" hidden></div>
+          <details><summary>Formula / confidence notes</summary>
+            <p style="margin-top:5px">Working reverse-engineering model: Coverage = sum(best) / 60 × 100, where best is the higher value from the two drivers for each of the six stats. Balance = 100 × (1 − population SD(best) / 3), floored at 0. Overlap = sum(|A − B|) / 60 × 100. Synergy = 0.845 × (balance + overlap) − 10.7, clamped to 0–100. This reproduces the observed synergy values 11, 31 and 67 for the test cases in the reverse-engineering notes. Overlap is still not fully confirmed because the observed game value of 24 for pair 2 rounds differently from this simple model's 23.</p>
+            <p style="margin-top:6px"><b>Known checks:</b> Pair 3 → Coverage 85, Balance 14, Overlap 12, Synergy 11. Pair 2 → Coverage 90, Balance 25, Overlap 23 by the simple overlap formula, Synergy 31. The game's recorded Pair 2 overlap was 24, so that one component remains a reverse-engineering target.</p>
+          </details>
+        </div>
       </div>
-      <div class="insight" id="insight"></div>
-      <div class="caution" id="caution" hidden></div>
-      <details style="margin-top:8px"><summary>Formula / confidence notes</summary>
-        <p style="margin-top:5px">Coverage = sum(best) / 60 × 100. Balance = 100 × (1 − population SD(best) / 3), floored at 0. Overlap = sum(|A − B|) / 60 × 100. Synergy = 0.845 × (balance + overlap) − 10.7, clamped to 0–100. This is the experimental fit from the original page, not a confirmed game formula.</p>
-      </details>
     </section>
   </section>
 
@@ -437,9 +469,13 @@
     document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
     btn.classList.add("active"); $(""+btn.dataset.tab).classList.add("active");
     window.scrollTo({top:0,behavior:"smooth"});
+    if(btn.dataset.tab==="home" && !entryOrder.some(el=>document.activeElement===el)){
+      setTimeout(()=>entryOrder[0]?.focus(),120);
+    }
   }));
 
   $("today").textContent=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",year:"numeric"}).format(new Date());
+  setTimeout(()=>{ if(document.activeElement===document.body) entryOrder[0]?.focus(); },180);
   $("refreshF1").addEventListener("click",loadF1Data);
   $("loadLastResult").addEventListener("click",loadLastRaceResult);
 
@@ -448,19 +484,38 @@
   const PRESETS={pair2:{a:[10,4,4,10,9,10],b:[10,10,1,6,10,10]},pair3:{a:[10,10,1,7,10,10],b:[10,9,3,8,9,8]}};
   const grid=$("grid"),inA=[],inB=[];
   function mkInput(id,cls,label){
-    const el=document.createElement("input"); el.type="number";el.inputMode="decimal";el.id=id;el.className=cls;el.min=0;el.max=10;el.step="any";el.placeholder="–";el.setAttribute("aria-label",label);el.addEventListener("input",update);return el;
+    const el=document.createElement("input");
+    el.type="number";el.inputMode="decimal";el.id=id;el.className=cls;el.min=1;el.max=10;el.step="1";el.value="1";el.placeholder="1";
+    el.setAttribute("aria-label",label);
+    el.addEventListener("focus",()=>el.select());
+    el.addEventListener("blur",()=>{if(el.value.trim()==="") el.value="1"; else {const n=Number(el.value); if(!Number.isInteger(n)||n<1) el.value="1"; else if(n>10) el.value="10";} update();});
+    el.addEventListener("input",update);
+    return el;
   }
   STATS.forEach((name,i)=>{const lab=document.createElement("label");lab.textContent=name;lab.htmlFor="a"+i;const a=mkInput("a"+i,"col-a","Driver A "+name),b=mkInput("b"+i,"col-b","Driver B "+name);grid.append(lab,a,b);inA.push(a);inB.push(b);});
+  // Enter follows the visible grid row-by-row:
+  // Pace A -> Pace B -> Focus A -> Focus B -> ... -> Nerve A -> Nerve B -> Pace A.
+  // This makes it possible to enter a complete stat for both drivers and immediately
+  // move to the next stat without using the mouse.
+  const entryOrder=[];
+  for(let i=0;i<STATS.length;i++){ entryOrder.push(inA[i], inB[i]); }
+  entryOrder.forEach((el,i)=>el.addEventListener("keydown",e=>{
+    if(e.key!=="Enter") return;
+    e.preventDefault();
+    update();
+    const next=entryOrder[(i+1)%entryOrder.length];
+    next.focus();
+    next.select();
+  }));
   const read=list=>list.map(el=>el.value.trim()===""?null:Number(el.value));
   const clamp=(x,lo,hi)=>Math.min(hi,Math.max(lo,x)),sum=xs=>xs.reduce((s,x)=>s+x,0);
   function update(){
     const a=read(inA),b=read(inB);let bad=false,missing=0;
-    inA.concat(inB).forEach(el=>{const t=el.value.trim(),v=Number(t),invalid=t!==""&&(!isFinite(v)||v<0||v>10);el.setAttribute("aria-invalid",invalid);if(invalid)bad=true;if(t==="")missing++;});
-    $("msg").textContent=bad?"Stats need to be numbers from 0 to 10.":"";
+    inA.concat(inB).forEach(el=>{const t=el.value.trim(),v=Number(t),invalid=t!==""&&(!isFinite(v)||v<1||v>10||!Number.isInteger(v));el.setAttribute("aria-invalid",invalid);if(invalid)bad=true;if(t==="")missing++;});
+    $("msg").textContent=bad?"Stats need to be whole numbers from 1 to 10.":"";
     drawChart(a,b,bad);
     if(bad||missing){showResults(null);$("insight").textContent=bad?"":(missing===12?"Enter both drivers' six stats, or try one of the example pairs.":"Fill in the remaining "+missing+" stat"+(missing===1?"":"s")+" to see results.");return;}
-    const isDefault=d=>d.every(x=>x===1);
-    if(isDefault(a)||isDefault(b)){showResults({syn:0});$("insight").textContent="A driver with every stat at 1 is still the default. The game shows synergy 0.";return;}
+    // The game uses 1 as the minimum valid stat. Blank fields are temporarily allowed while entering data.
     const best=a.map((x,i)=>Math.max(x,b[i])),mean=sum(best)/6,sd=Math.sqrt(sum(best.map(x=>(x-mean)*(x-mean)))/6);
     const cov=sum(best)/60*100,bal=Math.max(0,100*(1-sd/3)),ovl=sum(a.map((x,i)=>Math.abs(x-b[i])))/60*100,syn=clamp(.845*(bal+ovl)-10.7,0,100);
     showResults({cov,bal,ovl,syn});
@@ -474,12 +529,12 @@
   function svg(tag,attrs,text){const el=document.createElementNS(NS,tag);Object.keys(attrs).forEach(k=>el.setAttribute(k,attrs[k]));if(text!=null)el.textContent=text;return el;}
   function drawChart(a,b,bad){
     const chart=$("chart");while(chart.firstChild)chart.removeChild(chart.firstChild);
-    const cy=96,unit=7.1,colW=100,valid=v=>v!==null&&isFinite(v)&&v>=0&&v<=10,complete=!bad&&a.every(valid)&&b.every(valid);
+    const cy=96,unit=7.1,colW=100,valid=v=>v!==null&&isFinite(v)&&v>=1&&v<=10,complete=!bad&&a.every(valid)&&b.every(valid);
     chart.appendChild(svg("line",{x1:0,x2:600,y1:cy,y2:cy,stroke:"var(--line)","stroke-width":1.5}));
     STATS.forEach((name,i)=>{const cx=i*colW+colW/2;chart.appendChild(svg("text",{x:cx,y:208,"text-anchor":"middle","class":"name"},name));[[a[i],-1,"var(--blue)"],[b[i],1,"var(--purple)"]].forEach(d=>{const v=d[0];if(!valid(v))return;const other=d[1]===-1?b[i]:a[i],wins=!valid(other)||v>=other,h=v*unit,y=d[1]===-1?cy-h:cy;chart.appendChild(svg("rect",{x:cx-18,y,width:36,height:h,rx:4,fill:d[2],opacity:wins?1:.4}));chart.appendChild(svg("text",{x:cx,y:d[1]===-1?cy-h-5:cy+h+13,"text-anchor":"middle","class":"val"},String(Math.round(v*10)/10)));});});
     if(!complete&&a.every(v=>v===null)&&b.every(v=>v===null))chart.appendChild(svg("text",{x:300,y:95,"text-anchor":"middle","class":"name"},"Stats will appear here"));
   }
-  document.querySelectorAll("[data-preset]").forEach(btn=>btn.addEventListener("click",()=>{const p=PRESETS[btn.dataset.preset];inA.forEach((el,i)=>el.value=p?p.a[i]:"");inB.forEach((el,i)=>el.value=p?p.b[i]:"");update();}));
+  document.querySelectorAll("[data-preset]").forEach(btn=>btn.addEventListener("click",()=>{const p=PRESETS[btn.dataset.preset];inA.forEach((el,i)=>el.value=p?p.a[i]:1);inB.forEach((el,i)=>el.value=p?p.b[i]:1);update();}));
   update();
 
   // --- Car Fact of the Day ---

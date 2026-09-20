@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pair synergy calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #f1f4f9;
+    --surface: #ffffff;
+    --field: #f5f7fb;
+    --ink: #0f1a2b;
+    --muted: #536078;
+    --line: #d3dbe8;
+    --a: #0a7fb5;
+    --b: #7443c9;
+    --warn: #a35a00;
+    --warn-tint: rgba(163, 90, 0, 0.12);
+    --ok: #1b7d49;
+    --focus: #0a7fb5;
+    --sans: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --cond: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #09101b;
+      --surface: #111a2b;
+      --field: #0c1422;
+      --ink: #e8eefb;
+      --muted: #93a1bd;
+      --line: #24314a;
+      --a: #3dbcf0;
+      --b: #a677f2;
+      --warn: #f0b04a;
+      --warn-tint: rgba(240, 176, 74, 0.14);
+      --ok: #5fd394;
+      --focus: #3dbcf0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #09101b;
+    --surface: #111a2b;
+    --field: #0c1422;
+    --ink: #e8eefb;
+    --muted: #93a1bd;
+    --line: #24314a;
+    --a: #3dbcf0;
+    --b: #a677f2;
+    --warn: #f0b04a;
+    --warn-tint: rgba(240, 176, 74, 0.14);
+    --ok: #5fd394;
+    --focus: #3dbcf0;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.05;
+    margin: 4px 0 6px;
+    letter-spacing: 0.01em;
+  }
+  .lede { margin: 0 0 20px; color: var(--muted); max-width: 46ch; }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    margin-bottom: 14px;
+  }
+  .panel h2 {
+    font-family: var(--cond);
+    font-weight: 600;
+    font-size: 20px;
+    margin: 0 0 10px;
+  }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  button {
+    font: inherit;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+    min-height: 40px;
+  }
+  button:hover { border-color: var(--muted); }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 88px 88px;
+    gap: 8px 10px;
+    align-items: center;
+  }
+  .grid .head { font-family: var(--cond); font-weight: 600; font-size: 18px; }
+  .head.a { color: var(--a); text-align: center; }
+  .head.b { color: var(--b); text-align: center; }
+  .grid label { font-weight: 500; }
+  .grid input {
+    width: 100%;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 4px;
+    min-height: 44px;
+    -moz-appearance: textfield;
+  }
+  .grid input::-webkit-outer-spin-button,
+  .grid input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .grid input.col-a { border-bottom: 3px solid var(--a); }
+  .grid input.col-b { border-bottom: 3px solid var(--b); }
+  .grid input[aria-invalid="true"] { border-color: var(--warn); }
+  .msg { min-height: 1.4em; margin: 10px 0 0; color: var(--warn); font-size: 14px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  #chart { width: 100%; height: auto; display: block; }
+  #chart .bar { transition: height 0.18s, y 0.18s, opacity 0.18s; }
+  @media (prefers-reduced-motion: reduce) { #chart .bar { transition: none; } }
+  #chart text { font-family: var(--sans); fill: var(--muted); }
+  #chart .val { fill: var(--ink); font-weight: 600; font-size: 12px; }
+  #chart .name { font-size: 11px; }
+  .insight { margin: 10px 0 0; font-size: 15px; }
+
+  .results { margin: 0; padding: 0; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 2px 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .row:first-child { border-top: 0; padding-top: 0; }
+  .row dt { font-weight: 600; }
+  .row dd { margin: 0; }
+  .row .num {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1;
+    text-align: right;
+    min-width: 2.2ch;
+  }
+  .row.main .num { font-size: 56px; }
+  .tag { font-size: 14px; color: var(--muted); grid-column: 1; }
+  .tag::before {
+    content: "";
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 7px;
+    background: var(--muted);
+  }
+  .tag.sure::before { background: var(--ok); }
+  .tag.guess::before { background: var(--warn); }
+  .caution { margin: 12px 0 0; padding: 10px 12px; background: var(--warn-tint); border-radius: 10px; font-size: 14px; }
+  .caution[hidden] { display: none; }
+
+  details { margin-top: 4px; }
+  summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+  details p, details li { color: var(--muted); font-size: 15px; }
+  details ul { padding-left: 18px; margin: 6px 0; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1px 5px;
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pair synergy calculator</h1>
+  <p class="lede">Enter two teammates' stats to see the pair's coverage, balance, overlap and an estimated synergy. Each result is labelled by how sure it is; synergy is the least certain.</p>
+
+  <section class="panel" aria-labelledby="drivers-h">
+    <h2 id="drivers-h">Drivers</h2>
+    <div class="presets">
+      <button type="button" data-preset="pair2">Try pair 2</button>
+      <button type="button" data-preset="pair3">Try pair 3</button>
+      <button type="button" data-preset="clear">Clear</button>
+    </div>
+    <div class="grid" id="grid">
+      <span></span><span class="head a">Driver A</span><span class="head b">Driver B</span>
+    </div>
+    <p class="msg" id="msg" role="status"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="profile-h">
+    <h2 id="profile-h">Profile</h2>
+    <p class="legend">
+      <span><i style="background:var(--a)"></i>Driver A (up)</span>
+      <span><i style="background:var(--b)"></i>Driver B (down)</span>
+      <span>Solid bar = the better driver in that stat</span>
+    </p>
+    <svg id="chart" viewBox="0 0 360 262" role="img" aria-label="Mirrored bar chart of both drivers' stats"></svg>
+    <p class="insight" id="insight" aria-live="polite"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="results-h">
+    <h2 id="results-h">Results</h2>
+    <dl class="results" aria-live="polite">
+      <div class="row main">
+        <dt>Synergy</dt><dd class="num" id="r-syn">–</dd>
+        <dd class="tag guess">Best fit so far, not confirmed</dd>
+      </div>
+      <div class="row">
+        <dt>Coverage</dt><dd class="num" id="r-cov">–</dd>
+        <dd class="tag sure">Confirmed</dd>
+      </div>
+      <div class="row">
+        <dt>Balance</dt><dd class="num" id="r-bal">–</dd>
+        <dd class="tag sure">Confirmed, never below 0</dd>
+      </div>
+      <div class="row">
+        <dt>Overlap</dt><dd class="num" id="r-ovl">–</dd>
+        <dd class="tag sure">Exact on test pairs; rises as drivers differ</dd>
+      </div>
+    </dl>
+    <p class="caution" id="caution" hidden></p>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>How these are worked out</summary>
+      <p>For each stat, take the higher of the two drivers. Call those six values <em>best</em>.</p>
+      <ul>
+        <li><b>Coverage:</b> <code>sum(best) / 60 × 100</code></li>
+        <li><b>Balance:</b> <code>100 × (1 − stdev(best) / 3)</code>, using the population standard deviation, never below 0</li>
+        <li><b>Overlap:</b> <code>sum(|A − B|) / 60 × 100</code></li>
+        <li><b>Synergy:</b> <code>0.845 × (balance + overlap) − 10.7</code>, kept between 0 and 100</li>
+      </ul>
+      <p>Coverage, balance and overlap match every test the game has shown. The synergy line fits five results, but two of them sit at 0 and 100, so it is not confirmed. It gives coverage no weight; that is unproven. Real drivers may show overlap about one point higher than this, probably because the game rounds the stats it displays. Results are rounded to whole numbers like the game.</p>
+    </details>
+  </section>
+</main>
+
+<script>
+(function () {
+  var STATS = ["Pace", "Focus", "Control", "Racecraft", "Intellect", "Nerve"];
+  var PRESETS = {
+    pair2: { a: [10, 4, 4, 10, 9, 10], b: [10, 10, 1, 6, 10, 10] },
+    pair3: { a: [10, 10, 1, 7, 10, 10], b: [10, 9, 3, 8, 9, 8] }
+  };
+  var grid = document.getElementById("grid");
+  var inA = [], inB = [];
+
+  STATS.forEach(function (name, i) {
+    var lab = document.createElement("label");
+    lab.textContent = name;
+    lab.htmlFor = "a" + i;
+    var a = mkInput("a" + i, "col-a", "Driver A " + name);
+    var b = mkInput("b" + i, "col-b", "Driver B " + name);
+    grid.appendChild(lab); grid.appendChild(a); grid.appendChild(b);
+    inA.push(a); inB.push(b);
+  });
+
+  function mkInput(id, cls, label) {
+    var el = document.createElement("input");
+    el.type = "number";
+    el.inputMode = "decimal";
+    el.id = id;
+    el.className = cls;
+    el.min = 0; el.max = 10; el.step = "any";
+    el.placeholder = "–";
+    el.setAttribute("aria-label", label);
+    el.addEventListener("input", update);
+    return el;
+  }
+
+  function read(list) {
+    return list.map(function (el) {
+      var t = el.value.trim();
+      if (t === "") return null;
+      var v = Number(t);
+      return isFinite(v) ? v : NaN;
+    });
+  }
+  function clamp(x, lo, hi) { return Math.min(hi, Math.max(lo, x)); }
+  function sum(xs) { return xs.reduce(function (s, x) { return s + x; }, 0); }
+
+  function update() {
+    var a = read(inA), b = read(inB), bad = false, missing = 0;
+    inA.concat(inB).forEach(function (el) {
+      var t = el.value.trim();
+      var v = Number(t);
+      var invalid = t !== "" && (!isFinite(v) || v < 0 || v > 10);
+      el.setAttribute("aria-invalid", invalid ? "true" : "false");
+      if (invalid) bad = true;
+      if (t === "") missing++;
+    });
+    var msg = document.getElementById("msg");
+    msg.textContent = bad ? "Stats need to be numbers from 0 to 10." : "";
+    drawChart(a, b, bad);
+    if (bad || missing > 0) {
+      showResults(null);
+      document.getElementById("insight").textContent = bad ? "" :
+        (missing === 12 ? "Enter both drivers' six stats, or try one of the example pairs." :
+          "Fill in the remaining " + missing + " stat" + (missing === 1 ? "" : "s") + " to see results.");
+      return;
+    }
+    var isDefault = function (d) { return d.every(function (x) { return x === 1; }); };
+    if (isDefault(a) || isDefault(b)) {
+      showResults({ syn: 0 });
+      document.getElementById("insight").textContent =
+        "A driver with every stat at 1 is still at the default. The game shows synergy 0 and hides the other three bars, so this case says nothing about the formula.";
+      document.getElementById("caution").hidden = true;
+      return;
+    }
+    var best = a.map(function (x, i) { return Math.max(x, b[i]); });
+    var mean = sum(best) / 6;
+    var sd = Math.sqrt(sum(best.map(function (x) { return (x - mean) * (x - mean); })) / 6);
+    var cov = sum(best) / 60 * 100;
+    var bal = Math.max(0, 100 * (1 - sd / 3));
+    var ovl = sum(a.map(function (x, i) { return Math.abs(x - b[i]); })) / 60 * 100;
+    var syn = clamp(0.845 * (bal + ovl) - 10.7, 0, 100);
+    showResults({ cov: cov, bal: bal, ovl: ovl, syn: syn });
+
+    var weakIdx = 0;
+    best.forEach(function (x, i) { if (x < best[weakIdx]) weakIdx = i; });
+    var ins;
+    if (ovl < 8) {
+      ins = "These two are almost identical, so overlap is close to zero. The game scored an identical pair with an uneven profile at 0 synergy.";
+    } else if (best[weakIdx] <= 5) {
+      ins = "Weakest spot: " + STATS[weakIdx] + ". Neither driver is above " + fmt(best[weakIdx]) + " there, and that drags balance down.";
+    } else {
+      ins = "No hole: the better driver is at " + fmt(best[weakIdx]) + " or higher in every stat.";
+    }
+    document.getElementById("insight").textContent = ins;
+
+    var c = document.getElementById("caution");
+    if (ovl < 8 && bal > 60) {
+      c.hidden = false;
+      c.textContent = "Untested case: near-identical drivers with an even profile. The estimate assumes balance and overlap simply add up, so it could be far too high. If you can test it in the game, this is the most useful result to send.";
+    } else {
+      c.hidden = true;
+    }
+  }
+
+  function fmt(x) { return String(Math.round(x * 10) / 10); }
+
+  function showResults(r) {
+    var ids = { syn: "r-syn", cov: "r-cov", bal: "r-bal", ovl: "r-ovl" };
+    Object.keys(ids).forEach(function (k) {
+      document.getElementById(ids[k]).textContent = (r && r[k] != null) ? String(Math.round(r[k])) : "\u2013";
+    });
+    if (!r) document.getElementById("caution").hidden = true;
+  }
+
+  var NS = "http://www.w3.org/2000/svg";
+  function svg(tag, attrs, text) {
+    var el = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+    if (text != null) el.textContent = text;
+    return el;
+  }
+
+  function drawChart(a, b, bad) {
+    var chart = document.getElementById("chart");
+    while (chart.firstChild) chart.removeChild(chart.firstChild);
+    var cy = 120, unit = 10, colW = 60;
+    var valid = function (v) { return v !== null && isFinite(v) && v >= 0 && v <= 10; };
+    var complete = !bad && a.every(valid) && b.every(valid);
+
+    if (complete) {
+      var best = a.map(function (x, i) { return Math.max(x, b[i]); });
+      var lo = Math.min.apply(null, best);
+      if (lo <= 5) {
+        var idx = best.indexOf(lo);
+        chart.appendChild(svg("rect", { x: idx * colW + 4, y: 4, width: colW - 8, height: 236, rx: 8, fill: "var(--warn-tint)" }));
+      }
+    }
+    chart.appendChild(svg("line", { x1: 0, x2: 360, y1: cy, y2: cy, stroke: "var(--line)", "stroke-width": 1.5 }));
+
+    STATS.forEach(function (name, i) {
+      var cx = i * colW + colW / 2;
+      chart.appendChild(svg("text", { x: cx, y: 256, "text-anchor": "middle", "class": "name" }, name));
+      [[a[i], -1, "var(--a)"], [b[i], 1, "var(--b)"]].forEach(function (d) {
+        var v = d[0], dir = d[1], color = d[2];
+        if (!valid(v)) return;
+        var other = dir === -1 ? b[i] : a[i];
+        var wins = !valid(other) || v >= other;
+        var h = v * unit;
+        var y = dir === -1 ? cy - h : cy;
+        chart.appendChild(svg("rect", {
+          "class": "bar", x: cx - 13, y: y, width: 26, height: h, rx: 3,
+          fill: color, opacity: wins ? 1 : 0.42
+        }));
+        var ty = dir === -1 ? cy - h - 5 : cy + h + 14;
+        chart.appendChild(svg("text", { x: cx, y: ty, "text-anchor": "middle", "class": "val" }, fmt(v)));
+      });
+    });
+
+    if (!complete && a.every(function (v) { return v === null; }) && b.every(function (v) { return v === null; })) {
+      chart.appendChild(svg("text", { x: 180, y: 112, "text-anchor": "middle", "class": "name" }, "Stats will appear here"));
+    }
+  }
+
+  document.querySelectorAll("[data-preset]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var key = btn.getAttribute("data-preset");
+      var p = PRESETS[key];
+      inA.forEach(function (el, i) { el.value = p ? p.a[i] : ""; });
+      inB.forEach(function (el, i) { el.value = p ? p.b[i] : ""; });
+      update();
+    });
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

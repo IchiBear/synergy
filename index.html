@@ -152,6 +152,20 @@
     .loading{padding:10px;text-align:center;color:var(--muted);font-size:11px}.tiny-note{font-size:10px;color:var(--muted);line-height:1.35}.error-box{padding:8px;border:1px solid #733535;background:#241313;border-radius:9px;color:#ffb0b0;font-size:11px}
     @media(max-width:700px){.f1-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.session-grid,.result-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+  .coach-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.coach-image {
+  max-width: 100%;
+  width: 600px;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+  margin: 0 auto 20px;
+}
+
 </style>
 </head>
 <body>
@@ -169,6 +183,7 @@
     <button class="tab" data-tab="f1">F1 Calendar</button>
     <button class="tab" data-tab="dsl">Danish Supercar</button>
     <button class="tab" data-tab="facts">Car Fact of the Day</button>
+    <button class="tab" data-tab="coach">Coach Peepachu's Plans</button>
   </nav>
 
   <section class="view active" id="home">
@@ -268,6 +283,25 @@
       <div class="filter"><input id="factSearch" type="search" placeholder="Search car, manufacturer, motorsport, culture…"><button class="action" id="clearFactSearch">Clear</button></div>
       <div id="factResults" class="race-list"></div>
     </div>
+  </section>
+
+  <section class="view" id="coach">  <div class="coach-content">
+
+    <img
+      src="https://media.discordapp.net/attachments/1520220614403559486/1551601720453496942/2Q.png?ex=6ab29135&is=6ab13fb5&hm=6a623afb92f293deec15964312458d4224de3d6e1e996b378f0536fc65caa275&=&format=webp&quality=lossless"
+      alt="Funny image"
+      class="coach-image"
+    >
+
+    <h2>Coach Peep</h2>
+
+    <p>1. Push</p>
+    <p>2. Attack</p>
+    <p>3. Nitro</p>
+    <p>4. Pray</p>
+    <p>5. Win</p>
+    
+  </div>
   </section>
 
   <div class="foot">F1 calendar/session data is fetched from OpenF1 when online; Danish Supercar League entries are local page data.</div>
